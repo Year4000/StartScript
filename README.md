@@ -2,7 +2,7 @@ Y4K Start Script
 ======
 This script was made to run the servers at [Year4000]. This script can manage many
 servers at once. You can start/stop/restart/update each or all servers using this
-script, this script will grow upon needs for the servers at [Year40000].
+script, this script will grow upon needs for the servers at [Year4000].
 
 Install / Use
 ------
