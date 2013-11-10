@@ -52,9 +52,10 @@ MSG_CMD[2]="say"
 SHUTDOWN_MSG[2]="Server shutting down in"
 
 # Run commands as the user supplied in $USER
-function command {
+command() {
     ME=`whoami`
-    if [ $ME == $USER ]; then
+    if [ $ME == $USER ]
+    then
         bash -c "$1"
     else
         su - $USER -c "$1"
@@ -62,8 +63,9 @@ function command {
 }
 
 # Check if the server is running.
-function is_running {
-    if ps ax | grep SCREEN | grep ${SERVER_NAME[$1]} > /dev/null; then
+is_running() {
+    if ps ax | grep SCREEN | grep ${SERVER_NAME[$1]} > /dev/null
+    then
         return 0
     else
         return 1
@@ -71,8 +73,9 @@ function is_running {
 }
 
 # Checks if the server is running then send a message.
-function get_running {
-    if is_running "$1"; then
+get_running() {
+    if is_running "$1"
+    then
         echo "Running"
     else
         echo "Not Running"
@@ -80,53 +83,55 @@ function get_running {
 }
 
 # Start the server with the index of the array.
-function start_server {
+start_server() {
     echo -n "Trying to start the server ${SERVER_NAME[$1]}... "
 
-    if is_running "$1"; then
-        echo "All Ready Running"; sleep 2
+    if is_running "$1"
+    then
+        echo "All Ready Running" ; sleep 2
         return
     else
-        SCREEN="screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}"
-        command "cd ${SERVER_PATH[$1]} && $SCREEN"; sleep 2
+        command "cd ${SERVER_PATH[$1]} && screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}" ; sleep 2
     fi
 
     get_running $1
 }
 
 # Stop the server with the index of the array.
-function stop_server {
+stop_server() {
     echo -n "Trying to stop the server ${SERVER_NAME[$1]}... "
 
-    if is_running "$1"; then
-        for i in {30..0}; do
-            CMD="${MSG_CMD[$1]} ${SHUTDOWN_MSG[$1]} $i" 
-            SCREEN="screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"$CMD\"\015'"
-            command "$SCREEN"; sleep 1
+    if is_running "$1"
+    then
+        for i in {60..0}
+        do
+            command "screen -p 0 -S ${SERVER_NAME[$1]} -X eval 'stuff \"${MSG_CMD[$1]} ${SHUTDOWN_MSG[$1]} $i\"\015'" ; sleep 1
         done
-        CMD="${SHUTDOWN_CMD[$1]}"
-        SCREEN="screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"$CMD\"\015'"
-        command "$SCREEN"; sleep 5
+        command "screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"${SHUTDOWN_CMD[$1]}\"\015'" ; sleep 5
     fi
 
     get_running $1
 }
 
 # Restart the server with the index if the array.
-function restart_server {
-    echo "Trying to restart the server ${SERVER_NAME[$1]}... "
+restart_server() {
+    echo -n "Trying to restart the server ${SERVER_NAME[$1]}... "
 
-    if is_running "$1"; then
+    if is_running "$1"
+    then
         stop_server $1
         start_server $1
     else
         start_server $1
     fi
+
+    get_running $1
 }
 
 # Stop / Update / Start the server.
-function update_server {
-    if is_running "$1"; then
+update_server() {
+    if is_running "$1"
+    then
         stop_server $1
     fi
     command "cd ${SERVER_PATH[$1]} && rm -f ${SERVER_JAR[$1]}"
@@ -140,41 +145,49 @@ function update_server {
 SERVERS=${#SERVER_NAME[@]}
 case "$1" in
     start)
-        if [ $2 ]; then
+        if [ $2 ]
+        then
             start_server $2
         else
-            for (( i=0;i<$SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ ))
+            do
                 start_server $i
             done
         fi
     ;;
 
     stop)
-        if [ $2 ]; then
+        if [ $2 ]
+        then
             stop_server $2
         else
-            for (( i=0;i<$SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ ))
+            do
                 stop_server $i
             done
         fi
      ;;
 
     restart)
-        if [ $2 ]; then
+        if [ $2 ]
+        then
             restart_server $2
         else
-            for (( i=0;i<$SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ ))
+            do
                 restart_server $i
             done
         fi
      ;;
 
     status)
-        if [ $2 ]; then
+        if [ $2 ]
+        then
             echo -n "Server status ${SERVER_NAME[$2]}... "
             get_running $2
         else
-            for (( i=0;i<$SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ ))
+            do
                 echo -n "Server status ${SERVER_NAME[$i]}... "
                 get_running $i
             done
@@ -182,10 +195,12 @@ case "$1" in
      ;;
 
     update)
-        if [ $2 ]; then
+        if [ $2 ]
+        then
             update_server $2
         else
-            for (( i=0;i<$SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ ))
+            do
                 update_server $i
             done
         fi
