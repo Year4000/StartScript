@@ -87,7 +87,8 @@ function start_server {
         echo "All Ready Running"; sleep 2
         return
     else
-        command "cd ${SERVER_PATH[$1]} && screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}"; sleep 2
+        SCREEN="screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}"
+        command "cd ${SERVER_PATH[$1]} && $SCREEN"; sleep 2
     fi
 
     get_running $1
@@ -98,14 +99,14 @@ function stop_server {
     echo -n "Trying to stop the server ${SERVER_NAME[$1]}... "
 
     if is_running "$1"; then
-        for i in {60..0}; do
+        for i in {30..0}; do
             CMD="${MSG_CMD[$1]} ${SHUTDOWN_MSG[$1]} $i" 
             SCREEN="screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"$CMD\"\015'"
-            command $SCREEN; sleep 1
+            command "$SCREEN"; sleep 1
         done
         CMD="${SHUTDOWN_CMD[$1]}"
         SCREEN="screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"$CMD\"\015'"
-        command $SCREEN; sleep 5
+        command "$SCREEN"; sleep 5
     fi
 
     get_running $1
