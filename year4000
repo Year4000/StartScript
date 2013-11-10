@@ -109,7 +109,7 @@ function stop_server {
 
 # Restart the server with the index if the array.
 function restart_server {
-    echo -n "Trying to restart the server ${SERVER_NAME[$1]}... "
+    echo "Trying to restart the server ${SERVER_NAME[$1]}... "
 
     if is_running "$1"; then
         stop_server $1
@@ -117,8 +117,6 @@ function restart_server {
     else
         start_server $1
     fi
-
-    get_running $1
 }
 
 # Stop / Update / Start the server.
@@ -140,7 +138,7 @@ case "$1" in
         if [ $2 ]; then
             start_server $2
         else
-            for (( i = 0;i < $SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ )); do
                 start_server $i
             done
         fi
@@ -150,7 +148,7 @@ case "$1" in
         if [ $2 ]; then
             stop_server $2
         else
-            for (( i = 0;i < $SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ )); do
                 stop_server $i
             done
         fi
@@ -160,7 +158,7 @@ case "$1" in
         if [ $2 ]; then
             restart_server $2
         else
-            for (( i = 0;i < $SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ )); do
                 restart_server $i
             done
         fi
@@ -171,7 +169,7 @@ case "$1" in
             echo -n "Server status ${SERVER_NAME[$2]}... "
             get_running $2
         else
-            for (( i = 0;i < $SERVERS;i++ )); do
+            for (( i=0;i<$SERVERS;i++ )); do
                 echo -n "Server status ${SERVER_NAME[$i]}... "
                 get_running $i
             done
