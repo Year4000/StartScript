@@ -57,7 +57,7 @@ function command {
     if [ $ME == $USER ]; then
         bash -c "$1"
     else
-        su - $USERNAME -c "$1"
+        su - $USER -c "$1"
     fi
 }
 
