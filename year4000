@@ -99,9 +99,13 @@ function stop_server {
 
     if is_running "$1"; then
         for i in {60..0}; do
-            command "screen -p 0 -S ${SERVER_NAME[$1]} -X eval 'stuff \"${MSG_CMD[$1]} ${SHUTDOWN_MSG[$1]} $i\"\015'" ; sleep 1
+            CMD="${MSG_CMD[$1]} ${SHUTDOWN_MSG[$1]} $i" 
+            SCREEN="screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"$CMD\"\015'"
+            command $SCREEN; sleep 1
         done
-        command "screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"${SHUTDOWN_CMD[$1]}\"\015'" ; sleep 5
+        CMD="${SHUTDOWN_CMD[$1]}"
+        SCREEN="screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"$CMD\"\015'"
+        command $SCREEN; sleep 5
     fi
 
     get_running $1
