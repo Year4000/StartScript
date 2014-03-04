@@ -3,11 +3,11 @@
 
 ### BEGIN INIT INFO
 # Provides:   year4000
-# Required-Start: $local_fs $remote_fs
-# Required-Stop:  $local_fs $remote_fs
+# Required-Start: $local_fs $remote_fs $mysqld $mysql $mongo
+# Required-Stop:  $local_fs $remote_fs $mysqld $mysql $mongo
 # Should-Start:   $network
 # Should-Stop:    $network
-# Default-Start:  2 3 4 5
+# Default-Start:  4 5 6
 # Default-Stop:   0 1 6
 # Short-Description: Year4000 Service Script
 # Description: Runs multiple Minecraft screen process as a service
@@ -17,55 +17,24 @@
 
 # Script Configuration Setting
 USER="root"
+SERVER_SETTINGS="~/servers.cfg"
 
-# BungeeCord Server Settings
-SERVER_NAME[0]="bungeecord"
-SERVER_PATH[0]="/y4k/bungeecord"
-SERVER_JAR[0]="BungeeCord.jar"
-UPDATE_JAR[0]="BungeeCord.jar"
-START_ARGS[0]="java -server -Xmx256m -XX:+UseConcMarkSweepGC -jar BungeeCord.jar"
-UPDATE_URL[0]="http://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/"
-SHUTDOWN_CMD[0]="end"
-MSG_CMD[0]="alert"
-SHUTDOWN_MSG[0]="Proxy shutting down in"
-
-# Survival Server Settings
-SERVER_NAME[1]="survival"
-SERVER_PATH[1]="/y4k/survival"
-SERVER_JAR[1]="minecraft_server.jar"
-UPDATE_JAR[1]="spigot.jar"
-START_ARGS[1]="java -server -Xmx2G -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -jar minecraft_server.jar"
-UPDATE_URL[1]="http://ci.md-5.net/job/Spigot-1.7/lastSuccessfulBuild/artifact/Spigot-Server/target/"
-SHUTDOWN_CMD[1]="stop"
-MSG_CMD[1]="say"
-SHUTDOWN_MSG[1]="Server shutting down in"
-
-# Creative Server Settings
-SERVER_NAME[2]="creative"
-SERVER_PATH[2]="/y4k/creative"
-SERVER_JAR[2]="minecraft_server.jar"
-UPDATE_JAR[2]="spigot.jar"
-START_ARGS[2]="java -server -Xmx2G -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 -jar minecraft_server.jar"
-UPDATE_URL[2]="http://ci.md-5.net/job/Spigot-1.7/lastSuccessfulBuild/artifact/Spigot-Server/target/"
-SHUTDOWN_CMD[2]="stop"
-MSG_CMD[2]="say"
-SHUTDOWN_MSG[2]="Server shutting down in"
+# Load Settings
+. $SERVER_SETTINGS
 
 # Run commands as the user supplied in $USER
 command() {
     ME=`whoami`
-    if [ $ME == $USER ]
-    then
+    if [ $ME == $USER ] ; then
         bash -c "$1"
     else
-        su - $USER -c "$1"
+        su $USER -c "$1"
     fi
 }
 
-# Check if the server is running.
+# Check if the screen is running.
 is_running() {
-    if ps ax | grep SCREEN | grep ${SERVER_NAME[$1]} > /dev/null
-    then
+    if ps ax | grep java | grep ${SERVER_NAME[$1]} > /dev/null ; then
         return 0
     else
         return 1
@@ -74,142 +43,104 @@ is_running() {
 
 # Checks if the server is running then send a message.
 get_running() {
-    if is_running "$1"
-    then
-        echo "Running"
+    if is_running "$1" ; then
+        echo "Server ${SERVER_NAME[$1]} is on."
     else
-        echo "Not Running"
+        echo "Server ${SERVER_NAME[$1]} is off."
     fi
 }
 
 # Start the server with the index of the array.
 start_server() {
-    echo -n "Trying to start the server ${SERVER_NAME[$1]}... "
+    echo "Starting the server ${SERVER_NAME[$1]}... "
 
-    if is_running "$1"
-    then
-        echo "All Ready Running" ; sleep 2
-        return
-    else
-        command "cd ${SERVER_PATH[$1]} && screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}" ; sleep 2
+    if is_running "$1" ; then
+        command "cd ${SERVER_PATH[$1]} && screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}"
+s    else
+        command "cd ${SERVER_PATH[$1]} && screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}"
     fi
-
-    get_running $1
 }
 
 # Stop the server with the index of the array.
 stop_server() {
-    echo -n "Trying to stop the server ${SERVER_NAME[$1]}... "
+    echo "Stoping the server ${SERVER_NAME[$1]}... "
 
-    if is_running "$1"
-    then
-        for i in {60..0}
-        do
-            command "screen -p 0 -S ${SERVER_NAME[$1]} -X eval 'stuff \"${MSG_CMD[$1]} ${SHUTDOWN_MSG[$1]} $i\"\015'" ; sleep 1
+    if is_running "$1" ; then
+        for i in {20..0} ; do
+            command "screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"${MSG_CMD[$1]} ${SHUTDOWN_MSG[$1]} $i\"\015'"
+            sleep 1
         done
-        command "screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"${SHUTDOWN_CMD[$1]}\"\015'" ; sleep 5
+        command "screen -rx ${SERVER_NAME[$1]} -X eval 'stuff \"${SHUTDOWN_CMD[$1]}\"\015'"
+        sleep 10
+        command "screen -XS ${SERVER_NAME[$1]} kill"
     fi
-
-    get_running $1
 }
 
 # Restart the server with the index if the array.
 restart_server() {
-    echo -n "Trying to restart the server ${SERVER_NAME[$1]}... "
+    echo "Trying to restart the server ${SERVER_NAME[$1]}... "
 
-    if is_running "$1"
-    then
+    if is_running "$1" ; then
         stop_server $1
+        sleep 5
         start_server $1
     else
         start_server $1
     fi
-
-    get_running $1
-}
-
-# Stop / Update / Start the server.
-update_server() {
-    if is_running "$1"
-    then
-        stop_server $1
-    fi
-    command "cd ${SERVER_PATH[$1]} && rm -f ${SERVER_JAR[$1]}"
-    command "cd ${SERVER_PATH[$1]} && wget ${UPDATE_URL[$1]}${UPDATE_JAR[$1]}"
-    command "cd ${SERVER_PATH[$1]} && chmod +x ${UPDATE_JAR[$1]}"
-    command "cd ${SERVER_PATH[$1]} && mv ${UPDATE_JAR[$1]} ${SERVER_JAR[$1]}"
-    start_server $1
 }
 
 # Service Start Arguments
 SERVERS=${#SERVER_NAME[@]}
 case "$1" in
     start)
-        if [ $2 ]
-        then
+        if [ $2 ] ; then
             start_server $2
         else
-            for (( i=0;i<$SERVERS;i++ ))
-            do
+            for (( i = 0; i < $SERVERS; i++ )) ; do
                 start_server $i
+                sleep 1
             done
         fi
     ;;
 
     stop)
-        if [ $2 ]
-        then
+        if [ $2 ] ; then
             stop_server $2
         else
-            for (( i=0;i<$SERVERS;i++ ))
-            do
+            for (( i = 0; i < $SERVERS; i++ )) ; do
                 stop_server $i
+                sleep 1
             done
         fi
      ;;
 
     restart)
-        if [ $2 ]
-        then
+        if [ $2 ] ; then
             restart_server $2
         else
-            for (( i=0;i<$SERVERS;i++ ))
-            do
-                restart_server $i
+            for (( i = 0; i < $SERVERS; i++ )) ; do
+                restart_server $i 
+                sleep 1
             done
         fi
      ;;
 
     status)
-        if [ $2 ]
-        then
-            echo -n "Server status ${SERVER_NAME[$2]}... "
+        if [ $2 ] ; then
             get_running $2
         else
-            for (( i=0;i<$SERVERS;i++ ))
-            do
-                echo -n "Server status ${SERVER_NAME[$i]}... "
+            for (( i = 0; i < $SERVERS; i++ )) ; do
                 get_running $i
-            done
-        fi
-     ;;
-
-    update)
-        if [ $2 ]
-        then
-            update_server $2
-        else
-            for (( i=0;i<$SERVERS;i++ ))
-            do
-                update_server $i
+                sleep 1
             done
         fi
      ;;
 
     *)
-        echo "Usage: {start|stop|restart|update|status}"
+        echo "Usage: {start|stop|restart|status}"
         exit 1
     ;;
 esac
 
 exit 0
+
