@@ -56,7 +56,7 @@ start_server() {
 
     if is_running "$1" ; then
         command "cd ${SERVER_PATH[$1]} && screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}"
-s    else
+    else
         command "cd ${SERVER_PATH[$1]} && screen -dmS ${SERVER_NAME[$1]} ${START_ARGS[$1]}"
     fi
 }
