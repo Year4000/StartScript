@@ -1,0 +1,17 @@
+[
+    {
+        "id": "bungeecord",
+        "location": "/y4k/servers/bungeecord/",
+        "invoke": "java -jar bungeecord.jar"
+    },
+    {
+        "id": "minecraft1",
+        "location": "/y4k/servers/%id%/",
+        "invoke": "java -jar minecraft.jar -p 25566 -o false"
+    },
+    {
+        "id": "minecraft2",
+        "location": "/y4k/servers/%id%/",
+        "invoke": "java -jar minecraft.jar -p 25567 -o false"
+    }
+]

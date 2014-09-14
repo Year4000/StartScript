@@ -1,0 +1,10 @@
+# Mac OSX generated files
+.DS_Store
+
+# Editors files
+*.psd
+*~
+*.swp
+*.project
+*.sublime-project
+*.sublime-workspace
